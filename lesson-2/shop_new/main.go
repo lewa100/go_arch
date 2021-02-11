@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
+	"gb_go_arch/lesson-2/shop_new/notification"
+	"gb_go_arch/lesson-2/shop_new/repository"
+	"gb_go_arch/lesson-2/shop_new/service"
 	"log"
 	"net/http"
-	"shop/notification"
-	"shop/repository"
-	"shop/service"
 
 	"github.com/gorilla/mux"
 )
@@ -22,11 +22,19 @@ func main() {
 		log.Fatal(err)
 	}
 
+	from := "service@list.ru"
+	password := "passd"
+	host := "smtp.list.ru"
+	port := "587"
+
+	smtpBot := notification.NewSMTPBot(from, host, port, password)
+
 	rep := repository.NewMapDB()
-	service := service.NewService(rep, notif)
+	service := service.NewService(rep, notif, *smtpBot)
 	s := &server{
 		service: service,
 		rep:     rep,
+		smtpBot: *smtpBot,
 	}
 
 	router := mux.NewRouter()

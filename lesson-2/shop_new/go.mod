@@ -1,4 +1,4 @@
-module shop
+module gb_go_arch/lesson-2/shop_new
 
 go 1.15
 

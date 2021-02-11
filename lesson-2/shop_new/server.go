@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"gb_go_arch/lesson-2/shop_new/notification"
 	"net/http"
 	"strconv"
 
-	"shop/models"
-	"shop/repository"
-	"shop/service"
+	"gb_go_arch/lesson-2/shop_new/models"
+	"gb_go_arch/lesson-2/shop_new/repository"
+	"gb_go_arch/lesson-2/shop_new/service"
 
 	"github.com/gorilla/mux"
 )
@@ -16,6 +17,7 @@ import (
 type server struct {
 	service service.Service
 	rep     repository.Repository
+	smtpBot notification.BotSMTP
 }
 
 func (s *server) createOrderHandler(w http.ResponseWriter, r *http.Request) {
