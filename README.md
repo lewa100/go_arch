@@ -1,1 +1,1 @@
-# go_arch
+# gb_go_architecture

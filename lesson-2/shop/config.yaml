@@ -1,0 +1,9 @@
+server:
+  debug: on
+  listen: ":8080"
+  domain: "localhost"
+
+telegram:
+  bot-token: "12341234124"
+  chat-id: 12341234
+  msg-template-file: "./template/telegram.tmpl"
