@@ -2,16 +2,17 @@ package repository
 
 import (
 	"gb_go_arch/lesson-1/shop/models"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRepository(t *testing.T) {
 	db := NewMapDB()
 
 	type structForTest struct {
-		input   models.Item
-		create 	models.Item
+		input  models.Item
+		create models.Item
 		update models.Item
 	}
 
@@ -82,17 +83,15 @@ func TestRepository(t *testing.T) {
 		},
 	}
 
-
-
 	t.Run("TestCreateItem", func(t *testing.T) {
 		for _, v := range dataForTest {
 			result, err := db.CreateItem(&v.input)
 			if err != nil {
 				t.Error("unexpected error: ", err)
 			}
-			assert.Equal(t, v.create.ID,result.ID,"unexpected name: expected %d result: %d", result.ID, v.create.ID )
-			assert.Equal(t, v.create.Name,result.Name,"unexpected name: expected %d result: %d", result.Name, v.create.Name )
-			assert.Equal(t, v.create.Price,result.Price,"unexpected name: expected %d result: %d", result.Price, v.create.Price )
+			assert.Equal(t, v.create.ID, result.ID, "unexpected name: expected %d result: %d", result.ID, v.create.ID)
+			assert.Equal(t, v.create.Name, result.Name, "unexpected name: expected %d result: %d", result.Name, v.create.Name)
+			assert.Equal(t, v.create.Price, result.Price, "unexpected name: expected %d result: %d", result.Price, v.create.Price)
 		}
 	})
 
@@ -102,9 +101,9 @@ func TestRepository(t *testing.T) {
 			if err != nil {
 				t.Error("unexpected error: ", err)
 			}
-			assert.Equal(t, v.update.ID,result.ID,"unexpected name: expected %d result: %d", result.ID, v.update.ID )
-			assert.Equal(t, v.update.Name,result.Name,"unexpected name: expected %d result: %d", result.Name, v.update.Name )
-			assert.Equal(t, v.update.Price,result.Price,"unexpected name: expected %d result: %d", result.Price, v.update.Price )
+			assert.Equal(t, v.update.ID, result.ID, "unexpected name: expected %d result: %d", result.ID, v.update.ID)
+			assert.Equal(t, v.update.Name, result.Name, "unexpected name: expected %d result: %d", result.Name, v.update.Name)
+			assert.Equal(t, v.update.Price, result.Price, "unexpected name: expected %d result: %d", result.Price, v.update.Price)
 		}
 	})
 
@@ -114,34 +113,30 @@ func TestRepository(t *testing.T) {
 			t.Error("unexpected error: ", err)
 		}
 		_, err = db.GetItem(2)
-		assert.Error(t, err,"Item not deleted")
+		assert.EqualError(t, err, "not found", "Item not found")
 	})
 
 	type structForItemFilterTest struct {
-		in   ItemFilter
-		out  int
+		in  ItemFilter
+		out int
 	}
 
 	listForTest := []structForItemFilterTest{
 		{
 			in: ItemFilter{
-				PriceLeft: createInt64(0),
-				PriceRight: createInt64(30),
 				Limit: 4,
 			},
 			out: 3,
-		},{
+		}, {
 			in: ItemFilter{
-				PriceLeft: createInt64(20),
-				PriceRight: createInt64(50),
+				//PriceLeft:  createInt64(20),
+				//PriceRight: createInt64(50),
 				Limit: 3,
 			},
 			out: 3,
 		},
 		{
 			in: ItemFilter{
-				PriceLeft: createInt64(10),
-				PriceRight: createInt64(100),
 				Limit: 1,
 			},
 			out: 1,
@@ -154,11 +149,15 @@ func TestRepository(t *testing.T) {
 			if err != nil {
 				t.Error("unexpected error: ", err)
 			}
-			assert.Equal(t, len(r), v.out , "unexpected name: expected %d result: %d", r, v)
+			assert.Equal(t, len(r), v.out, "unexpected name: expected %d result: %d", r, v)
+			//for _, it := range r {
+			//	assert.True(t, *v.in.PriceLeft <= it.Price, "unexpected name: The condition is not met %d <= %d <= %d", v.in.PriceLeft, it, v.in.PriceRight)
+			//}
 		}
 	})
 }
 
-func createInt64(x int64) *int64 {
-	return &x
-}
+//func createInt64(x int) *int64 {
+//	tmp := int64(x)
+//	return &tmp
+//}
