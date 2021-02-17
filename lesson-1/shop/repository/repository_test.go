@@ -3,73 +3,161 @@ package repository
 import (
 	"gb_go_arch/lesson-1/shop/models"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateItem(t *testing.T) {
+func TestRepository(t *testing.T) {
 	db := NewMapDB()
 
-	input := &models.Item{
-		Name:  "someName",
-		Price: 10,
-	}
-	expected := &models.Item{
-		ID:    1,
-		Name:  input.Name,
-		Price: input.Price,
+	type structForTest struct {
+		input  models.Item
+		create models.Item
+		update models.Item
 	}
 
-	result, err := db.CreateItem(input)
-	if err != nil {
-		t.Error("unexpected error: ", err)
+	dataForTest := []structForTest{
+		{
+			input: models.Item{
+				Name:  "someName1",
+				Price: 10,
+			},
+			create: models.Item{
+				ID:    1,
+				Name:  "someName1",
+				Price: 10,
+			},
+			update: models.Item{
+				ID:    1,
+				Name:  "someName10",
+				Price: 100,
+			},
+		},
+		{
+			input: models.Item{
+				Name:  "someName2",
+				Price: 20,
+			},
+			create: models.Item{
+				ID:    2,
+				Name:  "someName2",
+				Price: 20,
+			},
+			update: models.Item{
+				ID:    2,
+				Name:  "someName20",
+				Price: 200,
+			},
+		},
+		{
+			input: models.Item{
+				Name:  "someName3",
+				Price: 40,
+			},
+			create: models.Item{
+				ID:    3,
+				Name:  "someName3",
+				Price: 40,
+			},
+			update: models.Item{
+				ID:    3,
+				Name:  "someName30",
+				Price: 400,
+			},
+		},
+		{
+			input: models.Item{
+				Name:  "someName4",
+				Price: 50,
+			},
+			create: models.Item{
+				ID:    4,
+				Name:  "someName4",
+				Price: 50,
+			},
+			update: models.Item{
+				ID:    4,
+				Name:  "someName40",
+				Price: 500,
+			},
+		},
 	}
 
-	if expected.ID != result.ID {
-		t.Errorf("unexpected name: expected %d result: %d", expected.ID, result.ID)
-	}
-	if expected.Name != result.Name {
-		t.Errorf("unexpected name: expected %s result: %s", expected.Name, result.Name)
-	}
-	if expected.Price != result.Price {
-		t.Errorf("unexpected name: expected %d result: %d", expected.Price, result.Price)
+	t.Run("TestCreateItem", func(t *testing.T) {
+		for _, v := range dataForTest {
+			result, err := db.CreateItem(&v.input)
+			if err != nil {
+				t.Error("unexpected error: ", err)
+			}
+			assert.Equal(t, v.create.ID, result.ID, "unexpected name: expected %d result: %d", result.ID, v.create.ID)
+			assert.Equal(t, v.create.Name, result.Name, "unexpected name: expected %d result: %d", result.Name, v.create.Name)
+			assert.Equal(t, v.create.Price, result.Price, "unexpected name: expected %d result: %d", result.Price, v.create.Price)
+		}
+	})
+
+	t.Run("TestUpdateItem", func(t *testing.T) {
+		for _, v := range dataForTest {
+			result, err := db.UpdateItem(&v.update)
+			if err != nil {
+				t.Error("unexpected error: ", err)
+			}
+			assert.Equal(t, v.update.ID, result.ID, "unexpected name: expected %d result: %d", result.ID, v.update.ID)
+			assert.Equal(t, v.update.Name, result.Name, "unexpected name: expected %d result: %d", result.Name, v.update.Name)
+			assert.Equal(t, v.update.Price, result.Price, "unexpected name: expected %d result: %d", result.Price, v.update.Price)
+		}
+	})
+
+	t.Run("TestDeleteItem", func(t *testing.T) {
+		err := db.DeleteItem(2)
+		if err != nil {
+			t.Error("unexpected error: ", err)
+		}
+		_, err = db.GetItem(2)
+		assert.EqualError(t, err, "not found", "Item not found")
+	})
+
+	type structForItemFilterTest struct {
+		in  ItemFilter
+		out int
 	}
 
-	result, err = db.GetItem(expected.ID)
-	if err != nil {
-		t.Error("unexpected error: ", err)
+	listForTest := []structForItemFilterTest{
+		{
+			in: ItemFilter{
+				Limit: 4,
+			},
+			out: 3,
+		}, {
+			in: ItemFilter{
+				//PriceLeft:  createInt64(20),
+				//PriceRight: createInt64(50),
+				Limit: 3,
+			},
+			out: 3,
+		},
+		{
+			in: ItemFilter{
+				Limit: 1,
+			},
+			out: 1,
+		},
 	}
 
-	if expected.ID != result.ID {
-		t.Errorf("unexpected name: expected %d result: %d", expected.ID, result.ID)
-	}
-	if expected.Name != result.Name {
-		t.Errorf("unexpected name: expected %s result: %s", expected.Name, result.Name)
-	}
-	if expected.Price != result.Price {
-		t.Errorf("unexpected name: expected %d result: %d", expected.Price, result.Price)
-	}
-
-	input = &models.Item{
-		Name:  "someName2",
-		Price: 20,
-	}
-	expected = &models.Item{
-		ID:    2,
-		Name:  input.Name,
-		Price: input.Price,
-	}
-
-	result, err = db.CreateItem(input)
-	if err != nil {
-		t.Error("unexpected error: ", err)
-	}
-
-	if expected.ID != result.ID {
-		t.Errorf("unexpected name: expected %d result: %d", expected.ID, result.ID)
-	}
-	if expected.Name != result.Name {
-		t.Errorf("unexpected name: expected %s result: %s", expected.Name, result.Name)
-	}
-	if expected.Price != result.Price {
-		t.Errorf("unexpected name: expected %d result: %d", expected.Price, result.Price)
-	}
+	t.Run("TestListItems", func(t *testing.T) {
+		for _, v := range listForTest {
+			r, err := db.ListItems(&v.in)
+			if err != nil {
+				t.Error("unexpected error: ", err)
+			}
+			assert.Equal(t, len(r), v.out, "unexpected name: expected %d result: %d", r, v)
+			//for _, it := range r {
+			//	assert.True(t, *v.in.PriceLeft <= it.Price, "unexpected name: The condition is not met %d <= %d <= %d", v.in.PriceLeft, it, v.in.PriceRight)
+			//}
+		}
+	})
 }
+
+//func createInt64(x int) *int64 {
+//	tmp := int64(x)
+//	return &tmp
+//}

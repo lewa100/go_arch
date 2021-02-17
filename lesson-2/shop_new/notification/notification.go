@@ -2,8 +2,7 @@ package notification
 
 import (
 	"fmt"
-	"shop/models"
-
+	"gb_go_arch/lesson-2/shop_new/models"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
@@ -17,7 +16,7 @@ type telegramBot struct {
 }
 
 func (s *telegramBot) SendOrderCreated(order *models.Order) error {
-	text := fmt.Sprintf("new order %d\n\nphone: %s", order.ID, order.CustomerPhone)
+	text := fmt.Sprintf("new order %d\n\nphone: %s\nemail: %s", order.ID, order.CustomerPhone, order.CustomerEmail)
 
 	fmt.Println(s.chatID)
 	msg := tgbotapi.NewMessage(s.chatID, text)

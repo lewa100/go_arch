@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"shop/models"
+	"gb_go_arch/lesson-2/shop_new/models"
 )
 
 var (
@@ -92,6 +92,7 @@ func (m *mapDB) CreateOrder(order *models.Order) (*models.Order, error) {
 		ID:            m.ordersTable.maxID,
 		CustomerName:  order.CustomerName,
 		CustomerPhone: order.CustomerPhone,
+		CustomerEmail: order.CustomerEmail,
 		ItemIDs:       order.ItemIDs,
 		CreatedAt:     timeNow,
 		UpdatedAt:     timeNow,
@@ -105,6 +106,7 @@ func (m *mapDB) CreateOrder(order *models.Order) (*models.Order, error) {
 		ID:            newOrder.ID,
 		CustomerName:  newOrder.CustomerName,
 		CustomerPhone: newOrder.CustomerPhone,
+		CustomerEmail: newOrder.CustomerEmail,
 		ItemIDs:       newOrder.ItemIDs,
 		CreatedAt:     newOrder.CreatedAt,
 		UpdatedAt:     newOrder.UpdatedAt,
