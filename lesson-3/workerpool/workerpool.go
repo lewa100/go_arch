@@ -17,6 +17,7 @@ type Worker struct {
 	wg      *sync.WaitGroup
 	num     int // only for example
 	jobChan <-chan *Job
+	sync.Mutex
 }
 
 var (
@@ -28,10 +29,10 @@ var (
 )
 
 func initFlag() {
-	fUrl = flag.String("u", "http://localhost:8081/item", "Url for DDoS")
-	fCountFlows = flag.Int("c", 1, "Count flows")
-	fLimit = flag.Bool("f", false, "False - Count Limit, True - time limit")
-	fCountLimit = flag.Int64("w", 0, "Count Limit / Time limit in seconds")
+	fUrl = flag.String("url", "http://localhost:8081/item", "Url for DDoS")
+	fCountFlows = flag.Int("count_flow", 1, "Count flows")
+	fLimit = flag.Bool("time", false, "False - Count Limit, True - time limit")
+	fCountLimit = flag.Int64("weight", 0, "Count Limit / Time limit in seconds")
 
 	flag.Parse()
 
@@ -50,46 +51,54 @@ func main() {
 	startApp := time.Now()
 	initFlag()
 
-	//timer := f?time.After(3 * time.Second): time.After(3 * time.Second)
 	done := make(chan bool, 1)
 	wg := &sync.WaitGroup{}
 	jobChan := make(chan *Job)
 	var timer <-chan time.Time
 
+	// Use flag -time
 	if *fLimit == true {
 		timer = time.After(time.Duration(*fCountLimit) * time.Second)
 	}
+
+	//flag count_flow
 	for i := 0; i < *fCountFlows; i++ {
 		worker := NewWorker(i+1, wg, jobChan)
 		wg.Add(1)
-		go worker.Handle(&done)
+		go worker.Handle(done)
 	}
 
-	for i := 0; ; i++ {
-		select {
-		case <-timer:
-			log.Printf("Time out %s", time.Duration(*fCountLimit)*time.Second)
-			done <- true
-			return
-		case <-done:
-			log.Printf("RPS: %s, AVG: %s", time.Duration(int(time.Since(startApp))/len(sliceTime)),
-				time.Duration(sliceAvg()))
-			close(jobChan)
-			return
-		default:
-			jobChan <- &Job{
-				payload: []byte(fmt.Sprintf("Job %d", i)),
+	go func() {
+		for i := 0; ; i++ {
+			select {
+			default:
+				jobChan <- &Job{
+					payload: []byte(fmt.Sprintf("Job %d", i)),
+				}
+			case <-timer:
+				log.Printf("Time out %s", time.Duration(*fCountLimit)*time.Second)
+				done <- true
+				close(jobChan)
+				return
+			case <-done:
+				close(jobChan)
+				return
 			}
 		}
-	}
+	}()
+	<-done
 	wg.Wait()
+	log.Printf("RPS: %s, AVG: %s", time.Duration(int(time.Since(startApp))/len(sliceTime)),
+		time.Duration(sliceAvg()))
 }
 
-func (w *Worker) Handle(done *chan bool) {
+func (w *Worker) Handle(done chan bool) {
 	defer w.wg.Done()
 	for job := range w.jobChan {
-		//log.Printf("worker %d processing job with payload %s", w.num, string(job.payload))
-		newDDosRequest(w, *job, *done)
+		log.Printf("worker %d processing job with payload %s", w.num, string(job.payload))
+		w.Lock()
+		newDDosRequest(w, *job, done)
+		w.Unlock()
 	}
 }
 
@@ -109,7 +118,7 @@ func newDDosRequest(w *Worker, job Job, done chan bool) {
 	}
 
 	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-		defer timeTrack(start, resp, w, job, done)
+		timeTrack(start, resp, w, job, done)
 	} else {
 		log.Println("Argh! Broken")
 	}
@@ -134,6 +143,5 @@ func sliceAvg() int {
 		sum += t
 	}
 	avg := int(sum) / len(sliceTime)
-	log.Print(avg)
 	return avg
 }
