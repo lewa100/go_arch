@@ -1,0 +1,27 @@
+{{define "Todolist"}}
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Go To-Do list</title>
+  </head>
+  <body>
+    <p>
+      To-Do list: {{ .Title }} 
+    </p>
+    <table>
+      	<tr>
+          <td>Task</td>
+          <td>Done</td>
+    	</tr>
+      	{{ with .Tasks }}
+			{{ range . }}
+      			<tr>
+              		<td>{{ .Name }}</td>
+              		<td><a href="/switch?task_id={{ .ID }}">{{ if .IsDone }}Yes{{ else }}No{{ end }}</a></td>
+      			</tr>
+			{{ end }} 
+      	{{ end }}
+    </table>
+  </body>
+</html>
+{{end}}
