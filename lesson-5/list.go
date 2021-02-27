@@ -72,11 +72,9 @@ func (l *List) Append(node *Node) {
 }
 
 func (l *List) Find(num int) *Node {
-	if l.head != nil {
-		for tmp := l.head; tmp != nil; tmp = tmp.next {
-			if tmp.Data == num {
-				return tmp
-			}
+	for tmp := l.head; tmp != nil; tmp = tmp.next {
+		if tmp.Data == num {
+			return tmp
 		}
 	}
 	return nil
@@ -114,27 +112,30 @@ func (l *List) Print() {
 	}
 }
 
-//func main() {
-//	list := &List{}
-//	for i := 0; i < 5; i++ {
-//		node := &Node{
-//			Data: i,
-//		}
-//		list.Append(node)
-//	}
-//
-//	node1 := &Node{
-//		Data: 6,
-//	}
-//	list.Add(nil, node1)
-//
-//	fmt.Println(list.Len())
-//	list.Print()
-//
-//	node := list.Find(3)
-//
-//	list.Delete(node)
-//
-//	fmt.Println(list.Len())
-//	list.Print()
-//}
+func main() {
+	list := &List{}
+	emp := list.Find(3)
+	fmt.Println(emp)
+
+	for i := 0; i < 5; i++ {
+		node := &Node{
+			Data: i,
+		}
+		list.Append(node)
+	}
+
+	node1 := &Node{
+		Data: 6,
+	}
+	list.Add(nil, node1)
+
+	fmt.Println(list.Len())
+	list.Print()
+
+	node := list.Find(3)
+
+	list.Delete(node)
+
+	fmt.Println(list.Len())
+	list.Print()
+}

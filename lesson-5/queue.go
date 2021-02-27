@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 type Queue struct {
 	sli *List
 }
@@ -27,12 +25,12 @@ func (s *Queue) Pop() int {
 	return elem
 }
 
-func main() {
-	queue := NewQueue()
-	queue.Push(5)
-	queue.Push(6)
-	queue.Push(7)
-	fmt.Println(queue.Pop())
-	fmt.Println(queue.Pop())
-	fmt.Println(queue.Pop())
-}
+//func main() {
+//	queue := NewQueue()
+//	queue.Push(5)
+//	queue.Push(6)
+//	queue.Push(7)
+//	fmt.Println(queue.Pop())
+//	fmt.Println(queue.Pop())
+//	fmt.Println(queue.Pop())
+//}
