@@ -17,7 +17,6 @@ type Worker struct {
 	wg      *sync.WaitGroup
 	num     int // only for example
 	jobChan <-chan *Job
-	sync.Mutex
 }
 
 var (
@@ -51,21 +50,22 @@ func main() {
 	startApp := time.Now()
 	initFlag()
 
+	timer := make(<-chan time.Time)
 	done := make(chan bool, 1)
 	wg := &sync.WaitGroup{}
+	m := &sync.Mutex{}
 	jobChan := make(chan *Job)
-	var timer <-chan time.Time
 
 	// Use flag -time
-	if *fLimit == true {
-		timer = time.After(time.Duration(*fCountLimit) * time.Second)
-	}
+	//if *fLimit == true {
+	timer = time.After(time.Duration(*fCountLimit) * time.Second)
+	//}
 
 	//flag count_flow
 	for i := 0; i < *fCountFlows; i++ {
 		worker := NewWorker(i+1, wg, jobChan)
 		wg.Add(1)
-		go worker.Handle(done)
+		go worker.Handle(done, m)
 	}
 
 	go func() {
@@ -77,11 +77,11 @@ func main() {
 				}
 			case <-timer:
 				log.Printf("Time out %s", time.Duration(*fCountLimit)*time.Second)
-				done <- true
 				close(jobChan)
+				done <- true
 				return
 			case <-done:
-				close(jobChan)
+				//close(jobChan)
 				return
 			}
 		}
@@ -92,13 +92,20 @@ func main() {
 		time.Duration(sliceAvg()))
 }
 
-func (w *Worker) Handle(done chan bool) {
+func (w *Worker) Handle(done chan bool, m *sync.Mutex) {
 	defer w.wg.Done()
 	for job := range w.jobChan {
-		log.Printf("worker %d processing job with payload %s", w.num, string(job.payload))
-		w.Lock()
-		newDDosRequest(w, *job, done)
-		w.Unlock()
+		start := time.Now()
+		resp, err := http.Get(*fUrl)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+			w.timeTrack(start, resp, job, done, m)
+		} else {
+			log.Println("Argh! Broken")
+		}
 	}
 }
 
@@ -110,31 +117,19 @@ func NewWorker(num int, wg *sync.WaitGroup, jobChan <-chan *Job) *Worker {
 	}
 }
 
-func newDDosRequest(w *Worker, job Job, done chan bool) {
-	start := time.Now()
-	resp, err := http.Get(*fUrl)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-		timeTrack(start, resp, w, job, done)
-	} else {
-		log.Println("Argh! Broken")
-	}
-}
-
 // timeTrack - func for print Log in realtime
-func timeTrack(start time.Time, resp *http.Response, w *Worker, job Job, done chan bool) {
+func (w *Worker) timeTrack(start time.Time, resp *http.Response, job *Job, done chan bool, m *sync.Mutex) {
 	elapsed := time.Since(start)
+	m.Lock()
 	sliceTime = append(sliceTime, elapsed)
 	avg := sliceAvg()
+	m.Unlock()
 	log.Printf("Flow id: %d Payload: %s HTTP Response Status: %d, %s, request time: %s", w.num, string(job.payload), resp.StatusCode, http.StatusText(resp.StatusCode), time.Duration(avg))
 	//check status fLimit or fCountLimit
-	if len(sliceTime) >= int(*fCountLimit) && *fLimit == false {
-		log.Printf("Count limit: %d", len(sliceTime))
-		done <- true
-	}
+	//if len(sliceTime) >= int(*fCountLimit) && *fLimit == false {
+	//	log.Printf("Count limit: %d", len(sliceTime))
+	//	done <- true
+	//}
 }
 
 func sliceAvg() int {
@@ -145,3 +140,26 @@ func sliceAvg() int {
 	avg := int(sum) / len(sliceTime)
 	return avg
 }
+
+//func main() {
+//	//startApp := time.Now()
+//	initFlag()
+//	ctx, cancel := context.WithCancel(context.Background())
+//	stopped := make(chan struct{})
+//
+//	go run(ctx, stopped)
+//
+//	cancel()
+//	<-stopped
+//	log.Warn("Stopped")
+//}
+//
+//func run(ctx context.Context, stopped chan struct{}) {
+//
+//	waiter := new(sync.WaitGroup)
+//	waiter.Add(1)
+//	go sniffer.startFlow(ctx, waiter)
+//
+//	waiter.Wait()
+//	stopped <- struct{}{}
+//}
